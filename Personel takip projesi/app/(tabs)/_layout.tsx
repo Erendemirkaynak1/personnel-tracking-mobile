@@ -26,8 +26,11 @@ export default function RootLayout() {
         }
         if (active) setIsAdmin(authorized);
       } catch {
-        await signOut(auth);
-        if (active) setIsAdmin(false);
+        try {
+          await signOut(auth);
+        } finally {
+          if (active) setIsAdmin(false);
+        }
       }
     });
 
