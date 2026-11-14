@@ -63,7 +63,7 @@ This roadmap distinguishes code changes committed to this branch from Firebase C
 - [ ] Confirm the installed Firebase SDK exports getReactNativePersistence in the configured React Native build environment.
 - [ ] Test sign-in, token refresh, app restart persistence, sign-out, expired sessions and offline behavior on Android and iOS.
 - [ ] Test direct navigation/deep links to every protected screen while signed out.
-- [ ] Add an explicit sign-out control and verify it clears the Firebase Auth session.
+- [x] Add an explicit sign-out control that clears the Firebase Auth session.
 - [ ] Review all direct Realtime Database calls and ensure none bypass the same admin-only authorization model.
 - [ ] Add automated tests for login failures, non-admin rejection and protected route behavior.
 - [ ] Avoid logging credentials, ID tokens, personal employee data or complete Firebase records.
