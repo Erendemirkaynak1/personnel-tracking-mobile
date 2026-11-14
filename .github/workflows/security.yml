@@ -1,0 +1,55 @@
+name: Security checks
+
+on:
+  push:
+    branches: [main, "security/**"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  secret-scan:
+    name: Scan current tree and Git history for secrets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          config-path: .gitleaks.toml
+
+  app-and-database-security:
+    name: App checks and Firebase rules tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: "Personel takip projesi"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: "Personel takip projesi/package-lock.json"
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Audit production and development dependencies
+        run: npm audit --audit-level=high
+      - name: TypeScript validation
+        run: npx tsc --noEmit
+      - name: Expo lint
+        run: npx expo lint
+      - name: Install isolated emulator test tools
+        run: npm install --no-save --package-lock=false firebase-tools @firebase/rules-unit-testing
+      - name: Test Realtime Database rules in emulator
+        run: npx firebase-tools emulators:exec --only database --project demo-personnel-security "node security-tests/database.rules.test.cjs"
