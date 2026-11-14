@@ -19,12 +19,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          config-path: .gitleaks.toml
+      - name: Install pinned Gitleaks CLI
+        run: |
+          curl --fail --silent --show-error --location https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_linux_x64.tar.gz | tar -xz -C /usr/local/bin gitleaks
+          gitleaks version
+      - name: Scan full Git history and working tree
+        run: gitleaks detect --source . --config .gitleaks.toml --redact --exit-code 1 --verbose
 
   app-and-database-security:
     name: App checks and Firebase rules tests
