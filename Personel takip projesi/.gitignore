@@ -1,38 +1,49 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
-
-# dependencies
+# Dependencies
 node_modules/
 
-# Expo
+# Expo / build output
 .expo/
 dist/
 web-build/
 expo-env.d.ts
+coverage/
 
-# Native
+# Native signing material and certificates
 *.orig.*
 *.jks
+*.keystore
 *.p8
 *.p12
 *.key
+*.pem
 *.mobileprovision
 
-# Metro
+# Metro and debug logs
 .metro-health-check*
-
-# debug
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+firebase-debug.log
+firebase-debug.*.log
 
-# macOS
+# Local environment files (keep only the documented template)
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Firebase Admin SDK credentials (never commit these)
+service-account*.json
+firebase-adminsdk*.json
+*-firebase-adminsdk-*.json
+
+# Firebase local state
+.firebase/
+
+# OS / editor / TypeScript
 .DS_Store
-*.pem
-
-# local env files
-.env*.local
-
-# typescript
 *.tsbuildinfo
+.vscode/
+.idea/
 
 app-example
