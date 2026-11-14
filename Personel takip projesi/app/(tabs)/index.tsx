@@ -52,6 +52,7 @@ export default function LoginScreen() {
         Alert.alert('Giriş Başarısız', result.error);
       }
     } finally {
+      setPassword('');
       setLoading(false);
     }
   };
