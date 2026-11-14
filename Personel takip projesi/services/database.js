@@ -113,6 +113,13 @@ export const loginUser = async (email, password) => {
       email: credential.user.email,
     };
   } catch (error) {
+    // A failed claim refresh must never leave a partially authenticated session.
+    try {
+      await signOut(auth);
+    } catch {
+      // Firebase database rules remain the server-side authorization boundary.
+    }
+
     // Do not expose account-existence details or backend internals to the UI.
     return {
       success: false,
