@@ -1,0 +1,10 @@
+title = "Repository secret scanning"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Exact Firebase browser API key already used as public client configuration; it is not an Admin SDK credential. This exception matches only this exact value in this one config file."
+regexTarget = "match"
+regexes = ['^AIzaSyAoh9S5m-h_VMVRV5f9IizSFtnMQ_WFBOQ$']
+paths = ['^Personel takip projesi/firebaseConfig\.js$']
