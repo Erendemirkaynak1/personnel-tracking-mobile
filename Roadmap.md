@@ -16,7 +16,7 @@ This roadmap distinguishes code changes committed to this branch from Firebase C
 | No route-level authentication guard | High | Non-login screens could be opened directly without an app-level session check. | Fixed in app code; runtime tests pending |
 | Firebase client configuration committed | Informational by itself | Firebase Web API keys and app identifiers are client configuration, not Admin SDK credentials. Abuse risk depends on API restrictions, Authentication and database rules. | Documented; Google Cloud restrictions pending |
 | .env and credential ignore coverage incomplete | Medium | Standard .env, Firebase Admin credential files and some local signing material were not excluded. | Fixed in .gitignore |
-| Duplicate placeholder Firebase module | Low | Unused services/firebase.ts contained template-only credentials and could cause configuration confusion. | Removal pending verification |
+| Duplicate placeholder Firebase module | Low | Unused services/firebase.ts contained template-only credentials and could cause configuration confusion. | Removed from hardening branch |
 | Git history contains Firebase client configuration | Informational by itself | Initial upload commit includes the same Firebase client config. No service-account private key, GitHub PAT or OAuth client secret was identified in the reviewed commit diffs. | Reviewed; history rewrite not indicated for this public client config |
 
 ## Work completed on security/hardening
@@ -80,7 +80,8 @@ This roadmap distinguishes code changes committed to this branch from Firebase C
 
 ### Phase 5 — Repository and supply-chain checks
 
-- [ ] Scan the complete current tree and all Git history with a secret scanner (for example Gitleaks) before public release.
+- [ ] Scan the complete current tree and all Git history with a dedicated secret scanner (for example Gitleaks) before public release.
+- [x] Run a targeted pattern review over all five commits returned by GitHub history: no GitHub PAT, private-key block, AWS access key, service-account private key or OAuth client secret matched; one Firebase client API key was present (public client configuration, not an Admin SDK secret).
 - [ ] Scan dependencies for known vulnerabilities; update unsupported or vulnerable packages and regenerate the lockfile.
 - [ ] Confirm no .env, service-account JSON, private signing key, keystore, certificate or local build artifact is tracked.
 - [ ] Confirm no real employee personal data, database exports, screenshots, backups or production logs are committed.
@@ -100,6 +101,13 @@ This roadmap distinguishes code changes committed to this branch from Firebase C
 - [ ] No real personal or production data is present in the repository.
 - [ ] Firebase API key restrictions and App Check are configured and verified.
 - [ ] Repository README and configuration documentation contain no credentials and explain safe local setup.
+
+## Validation performed on the hardening branch
+
+- [x] Parsed the new Firebase CLI and Realtime Database rules JSON successfully.
+- [x] Static checks confirmed the old database password lookup is absent, Firebase Auth sign-in is used, admin-claim checks exist in the login and route guard, and the legacy login node is denied by the rules.
+- [x] Compared the branch against main: the hardening branch is ahead and main has not been modified.
+- [ ] Runtime Expo / TypeScript / Android / iOS tests have not been run in this environment.
 
 ## Current release decision
 
