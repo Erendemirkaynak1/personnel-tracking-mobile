@@ -1,5 +1,6 @@
 import * as React from 'react';
 import renderer from 'react-test-renderer';
+import { expect, it } from '@jest/globals';
 
 import { ThemedText } from '../ThemedText';
 
