@@ -1,13 +1,65 @@
-import { Stack } from 'expo-router';
-//import { MenuButton } from '@/components/MenuButton';
-import { View, StyleSheet, Platform } from 'react-native';
-import { usePathname } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { Stack, usePathname, useRouter } from 'expo-router';
+import { ActivityIndicator, View, StyleSheet, Platform } from 'react-native';
+import { getIdTokenResult, onAuthStateChanged, signOut } from 'firebase/auth';
+import { auth } from '../../firebaseConfig';
+
 export default function RootLayout() {
   const pathname = usePathname();
-  //index de layoutu gizler
-  if (pathname === '/' || pathname === '/index') { // Android bazen '/index' kullanıyor
-    return <Stack screenOptions={{ headerShown: false }} />
+  const router = useRouter();
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const isLoginRoute = pathname === '/' || pathname === '/index';
+
+  useEffect(() => {
+    let active = true;
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        if (active) setIsAdmin(false);
+        return;
+      }
+
+      try {
+        const token = await getIdTokenResult(user, true);
+        const authorized = token.claims.admin === true;
+        if (!authorized) {
+          await signOut(auth);
+        }
+        if (active) setIsAdmin(authorized);
+      } catch {
+        await signOut(auth);
+        if (active) setIsAdmin(false);
+      }
+    });
+
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isAdmin === null) return;
+    if (!isLoginRoute && !isAdmin) {
+      router.replace('/');
+    } else if (isLoginRoute && isAdmin) {
+      router.replace('/home');
+    }
+  }, [isAdmin, isLoginRoute, router]);
+
+  if (!isLoginRoute && isAdmin === null) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" color="#1D3D47" />
+      </View>
+    );
   }
+
+  if (!isLoginRoute && !isAdmin) return null;
+
+  if (isLoginRoute) {
+    return <Stack screenOptions={{ headerShown: false }} />;
+  }
+
   return (
     <View style={{ flex: 1 }}>
       <Stack
@@ -16,35 +68,33 @@ export default function RootLayout() {
           headerTitleAlign: 'center',
           headerStyle: styles.header,
           headerTitleStyle: styles.headerTitle,
-         // headerShown: !isLoginPage,
         }}
       />
-      <View style={styles.menuContainer}>
-       
-      </View>
+      <View style={styles.menuContainer} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  loading: {
     flex: 1,
-    position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
   },
   header: {
-    height: Platform.select({ ios: 100, android: 60 }), // Platforma göre yükseklik
-    backgroundColor: '#1D3D47', // Header arkaplan rengi
+    height: Platform.select({ ios: 100, android: 60 }),
+    backgroundColor: '#1D3D47',
   },
   headerTitle: {
-    color: 'white', // Başlık rengi
+    color: 'white',
     fontWeight: 'bold',
   },
   menuContainer: {
     position: 'absolute',
-    top: Platform.select({ ios: 60, android: 15 }), // Platforma göre konum
+    top: Platform.select({ ios: 60, android: 15 }),
     right: 20,
     zIndex: 1000,
-    //backgroundColor: 'rgba(255,255,255,0.3)', // Buton arkaplanı
     borderRadius: 20,
     padding: 8,
   },
