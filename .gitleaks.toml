@@ -2,9 +2,3 @@ title = "Repository secret scanning"
 
 [extend]
 useDefault = true
-
-[[allowlists]]
-description = "Allow only the exact Firebase browser API key already used as public client configuration in the Firebase config file. This is not an Admin SDK credential."
-condition = "AND"
-regexes = ['^AIzaSyAoh9S5m-h_VMVRV5f9IizSFtnMQ_WFBOQ$']
-paths = ['^Personel takip projesi/firebaseConfig\.js$']
