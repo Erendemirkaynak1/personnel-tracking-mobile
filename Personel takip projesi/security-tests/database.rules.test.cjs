@@ -23,6 +23,14 @@ async function main() {
     const ordinaryUser = env.authenticatedContext('ordinary-user', { email: 'user@example.test' }).database();
     const admin = env.authenticatedContext('admin-user', { admin: true, email: 'admin@example.test' }).database();
 
+    // Root access must remain closed for every role; only explicit child paths are granted.
+    await assertFails(get(ref(unauthenticated)));
+    await assertFails(set(ref(unauthenticated), { injected: true }));
+    await assertFails(get(ref(ordinaryUser)));
+    await assertFails(set(ref(ordinaryUser), { injected: true }));
+    await assertFails(get(ref(admin)));
+    await assertFails(set(ref(admin), { injected: true }));
+
     for (const collection of collections) {
       await assertFails(get(ref(unauthenticated, collection)));
       await assertFails(set(ref(unauthenticated, collection + '/security-test'), { test: true }));
@@ -35,9 +43,11 @@ async function main() {
       await assertSucceeds(set(ref(admin, collection + '/security-test'), null));
     }
 
-    // The legacy plaintext-password collection must remain denied even to admins.
-    await assertFails(get(ref(admin, 'login')));
-    await assertFails(set(ref(admin, 'login/security-test'), { username: 'x', pass: 'x' }));
+    // The legacy plaintext-password collection must remain denied for every role.
+    for (const database of [unauthenticated, ordinaryUser, admin]) {
+      await assertFails(get(ref(database, 'login')));
+      await assertFails(set(ref(database, 'login/security-test'), { username: 'x', pass: 'x' }));
+    }
     console.log('PASS: unauthenticated and non-admin access denied; admin access allowed; legacy login denied.');
   } finally {
     await env.cleanup();
