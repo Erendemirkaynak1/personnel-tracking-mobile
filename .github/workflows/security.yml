@@ -26,6 +26,46 @@ jobs:
       - name: Scan full Git history and working tree
         run: gitleaks detect --source . --config .gitleaks.toml --redact --exit-code 1 --verbose
 
+  non-breaking-dependency-fix:
+    name: Apply compatible dependency security updates
+    if: github.event_name == 'push' && github.ref == 'refs/heads/security/hardening'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: "Personel takip projesi"
+    steps:
+      - name: Checkout hardening branch
+        uses: actions/checkout@v4
+        with:
+          ref: security/hardening
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: "Personel takip projesi/package-lock.json"
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Apply non-breaking npm security fixes
+        id: audit-fix
+        run: npm audit fix
+        continue-on-error: true
+      - name: Commit updated lockfile
+        if: always()
+        working-directory: .
+        run: |
+          if git diff --quiet -- "Personel takip projesi/package-lock.json"; then
+            echo "No compatible dependency updates were applied."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "Personel takip projesi/package-lock.json"
+          git commit -m "chore: apply compatible dependency security updates"
+          git push origin HEAD:security/hardening
+
   app-and-database-security:
     name: App checks and Firebase rules tests
     runs-on: ubuntu-latest
