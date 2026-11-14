@@ -1,7 +1,7 @@
 # Security Hardening Roadmap
 
 **Repository:** Erendemirkaynak1/personnel-tracking-mobile  
-**Application directory:** Personel takip projes/  
+**Application directory:** Personel takip projesi/  
 **Working branch:** security/hardening  
 **Release policy:** Keep the repository private until every Public Release Gate below is verified.
 
@@ -65,7 +65,8 @@ This roadmap distinguishes code changes committed to this branch from Firebase C
 - [ ] Test direct navigation/deep links to every protected screen while signed out.
 - [x] Add an explicit sign-out control that clears the Firebase Auth session.
 - [ ] Review all direct Realtime Database calls and ensure none bypass the same admin-only authorization model.
-- [ ] Add automated tests for login failures, non-admin rejection and protected route behavior.
+- [x] Add Firebase Realtime Database emulator tests for unauthenticated, non-admin, admin and legacy login-node access.
+- [ ] Add automated UI/integration tests for login failures and protected route behavior.
 - [ ] Avoid logging credentials, ID tokens, personal employee data or complete Firebase records.
 
 ### Phase 4 — Firebase and Google Cloud hardening
@@ -86,7 +87,9 @@ This roadmap distinguishes code changes committed to this branch from Firebase C
 - [ ] Confirm no .env, service-account JSON, private signing key, keystore, certificate or local build artifact is tracked.
 - [ ] Confirm no real employee personal data, database exports, screenshots, backups or production logs are committed.
 - [ ] If a true secret is ever found in Git history: revoke/rotate it first, then rewrite history with a coordinated force-push plan and invalidate affected caches/forks where possible. Deleting the file in a later commit is not sufficient.
-- [ ] Add CI checks for secret scanning, dependency auditing, linting and tests on every pull request.
+- [x] Add CI checks for Gitleaks secret scanning (including full Git history), npm dependency auditing, TypeScript validation, Expo linting and Firebase Realtime Database emulator tests on pushes / pull requests.
+- [x] Add Dependabot weekly update checks for npm dependencies and GitHub Actions.
+- [x] Add SECURITY.md with private vulnerability reporting and credential-handling guidance.
 - [ ] Protect main with pull-request review and passing checks; restrict force pushes and deletion.
 
 ## Public Release Gate — all required
@@ -107,10 +110,12 @@ This roadmap distinguishes code changes committed to this branch from Firebase C
 - [x] Parsed the new Firebase CLI and Realtime Database rules JSON successfully.
 - [x] Static checks confirmed the old database password lookup is absent, Firebase Auth sign-in is used, admin-claim checks exist in the login and route guard, and the legacy login node is denied by the rules.
 - [x] Compared the branch against main: the hardening branch is ahead and main has not been modified.
-- [ ] Runtime Expo / TypeScript / Android / iOS tests have not been run in this environment.
+- [x] Added GitHub Actions workflow to execute Gitleaks, npm audit, TypeScript, Expo lint and Firebase emulator rule tests.
+- [ ] CI workflow results are pending; this environment cannot execute the repository's Node/Expo build or Firebase emulator locally.
+- [ ] Android/iOS device builds and authentication-flow tests remain pending.
 
 ## Current release decision
 
 **NOT READY FOR PUBLIC RELEASE.**
 
-Code-level authentication and authorization hardening has been committed to the isolated branch, but the live Firebase rules, administrator provisioning, production data migration, platform testing, API-key restrictions and full history/dependency scans still require verification. Keep the repository private until every release gate is checked.
+Code-level authentication and authorization hardening has been committed to the isolated branch, but the live Firebase rules, administrator provisioning, production data migration, CI results, platform testing, API-key restrictions and full history/dependency scans still require verification. Keep the repository private until every release gate is checked.
