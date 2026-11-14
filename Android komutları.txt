@@ -1,0 +1,25 @@
+npx cross-env EAS_NO_VCS=1 eas build -p android == ANDROİD APK ÇEVİRME 
+Exponun sitesinden oturum açmalısınız!!!
+expo start (Programı test etmek için) 
+(ÖNCESİNDE ANDROİD STUDİO YÜKLEYİN!!!!)
+GENYMATİON EMÜLATÖR KULLANMALISINIZ!!! 
+
+Genymotion'u Expo projeniz için emülatör olarak kullanmak oldukça yaygın bir yöntemdir. İşte adım adım nasıl yapabileceğiniz:
+- Genymotion ve VirtualBox Kurulumu:- Genymotion'u resmi web sitesinden indirin ve yükleyin.
+- VirtualBox'ın da yüklü olduğundan emin olun, çünkü Genymotion, sanal cihazları çalıştırmak için bunu kullanır.
+
+- Android Virtual Device (AVD) Oluşturma:- Genymotion'u açın ve bir sanal cihaz (örneğin, Android 10 veya 11) oluşturun.
+
+- ADB (Android Debug Bridge) Ayarları:- Genymotion'un ayarlarında, ADB yolunu Expo CLI'nin kullandığı ADB ile eşleştirin. Örneğin, Windows'ta bu yol genellikle şu şekilde olabilir:C:\Users\<kullanıcı_adı>\AppData\Roaming\npm\node_modules\expo-cli\node_modules\xdl\binaries\windows\adb
+
+
+- Expo CLI ile Bağlantı:- Terminalde şu komutu çalıştırarak Genymotion cihazınızı bağlayın:adb connect <Genymotion_Cihaz_IP_Adresi>
+
+- Genymotion cihazınızın IP adresini öğrenmek için cihazın ayarlarına göz atabilirsiniz.
+
+- Expo Projenizi Çalıştırma:- Terminalde Expo projenizi başlatın:expo start
+
+- Daha sonra, "Run on Android device/emulator" seçeneğini tıklayarak projenizi Genymotion cihazında çalıştırabilirsiniz.
+
+
+Bu adımları takip ederek, Expo projenizi Genymotion emülatöründe çalıştırabilirsiniz. Eğer bir sorunla karşılaşırsanız, detaylı bir şekilde yardımcı olmaktan mutluluk duyarım! 
