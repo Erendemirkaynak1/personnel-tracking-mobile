@@ -55,11 +55,11 @@ jobs:
           node-version: 22.13.x
           cache: npm
           cache-dependency-path: "Personel takip projesi/package-lock.json"
-      - name: Align packages and regenerate lockfile for Expo SDK 58
+      - name: Install the SDK58 CLI and regenerate the dependency graph
         run: |
           rm -f package-lock.json
-          npx --yes expo@~58.0.24 install --fix
-          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          npm install --ignore-scripts --no-audit --no-fund
+          npx expo install --fix
       - name: Apply compatible transitive dependency security fixes
         id: audit-fix
         run: npm audit fix --package-lock-only --ignore-scripts
