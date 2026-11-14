@@ -52,12 +52,14 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22.13.x
           cache: npm
           cache-dependency-path: "Personel takip projesi/package-lock.json"
-      - name: Install locked dependencies
+      - name: Install current locked dependencies
         run: npm ci
-      - name: Apply non-breaking npm security fixes
+      - name: Upgrade Expo SDK 52 to supported SDK 57
+        run: npx expo install expo@^57.0.0 --fix
+      - name: Apply compatible transitive dependency security fixes
         id: audit-fix
         run: npm audit fix
         continue-on-error: true
@@ -74,8 +76,8 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add "Personel takip projesi/package-lock.json"
-          git commit -m "chore: apply compatible dependency security updates"
+          git add "Personel takip projesi/package.json" "Personel takip projesi/package-lock.json"
+          git commit -m "chore: upgrade Expo SDK and apply dependency security fixes"
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git fetch origin "${BRANCH_NAME}"
           git rebase "origin/${BRANCH_NAME}"
@@ -99,13 +101,15 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22.13.x
           cache: npm
           cache-dependency-path: "Personel takip projesi/package-lock.json"
       - name: Install locked dependencies
         run: npm ci
       - name: Audit production and development dependencies
+        id: dependency-audit
         run: npm audit --audit-level=high
+        continue-on-error: true
       - name: TypeScript validation
         run: npx tsc --noEmit
       - name: Expo lint
@@ -114,3 +118,10 @@ jobs:
         run: npm install --no-save --package-lock=false firebase-tools @firebase/rules-unit-testing
       - name: Test Realtime Database rules in emulator
         run: npx firebase-tools emulators:exec --only database --project demo-personnel-security "node security-tests/database.rules.test.cjs"
+      - name: Expo SDK compatibility diagnostics
+        run: npx expo-doctor
+      - name: Fail if high or critical dependency advisories remain
+        if: steps.dependency-audit.outcome == 'failure'
+        run: |
+          echo "High or critical dependency advisories remain. See npm audit output above."
+          exit 1
