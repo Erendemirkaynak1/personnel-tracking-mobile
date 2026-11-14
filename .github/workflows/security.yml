@@ -58,10 +58,10 @@ jobs:
       - name: Regenerate lockfile for the Expo SDK 57 dependency graph
         run: |
           rm -f package-lock.json
-          npm install
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
       - name: Apply compatible transitive dependency security fixes
         id: audit-fix
-        run: npm audit fix
+        run: npm audit fix --package-lock-only --ignore-scripts
         continue-on-error: true
       - name: Commit updated lockfile
         if: always()
