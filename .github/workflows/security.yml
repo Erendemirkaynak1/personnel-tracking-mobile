@@ -55,9 +55,10 @@ jobs:
           node-version: 22.13.x
           cache: npm
           cache-dependency-path: "Personel takip projesi/package-lock.json"
-      - name: Regenerate lockfile for the Expo SDK 57 dependency graph
+      - name: Align packages and regenerate lockfile for Expo SDK 58
         run: |
           rm -f package-lock.json
+          npx --yes expo@~58.0.24 install --fix
           npm install --package-lock-only --ignore-scripts --no-audit --no-fund
       - name: Apply compatible transitive dependency security fixes
         id: audit-fix
@@ -81,7 +82,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add "Personel takip projesi/package.json" "Personel takip projesi/package-lock.json"
-          git commit -m "chore: regenerate SDK57 lockfile and apply dependency security fixes"
+          git commit -m "chore: upgrade Expo SDK58 and patch dependency security issues"
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git fetch origin "${BRANCH_NAME}"
           git rebase "origin/${BRANCH_NAME}"
