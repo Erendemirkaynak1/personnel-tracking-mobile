@@ -28,9 +28,10 @@ export default function RootLayout() {
       } catch {
         try {
           await signOut(auth);
-        } finally {
-          if (active) setIsAdmin(false);
+        } catch {
+          // The database rules still reject invalid or stale authorization.
         }
+        if (active) setIsAdmin(false);
       }
     });
 
