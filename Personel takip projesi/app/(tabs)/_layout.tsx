@@ -1,69 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { Stack, usePathname, useRouter } from 'expo-router';
-import { ActivityIndicator, View, StyleSheet, Platform } from 'react-native';
-import { getIdTokenResult, onAuthStateChanged, signOut } from 'firebase/auth';
-import { auth } from '../../firebaseConfig';
+import React from 'react';
+import { Stack } from 'expo-router';
+import { Platform, StyleSheet, View } from 'react-native';
 
-export default function RootLayout() {
-  const pathname = usePathname();
-  const router = useRouter();
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
-  const isLoginRoute = pathname === '/' || pathname === '/index';
-
-  useEffect(() => {
-    let active = true;
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        if (active) setIsAdmin(false);
-        return;
-      }
-
-      try {
-        const token = await getIdTokenResult(user, true);
-        const authorized = token.claims.admin === true;
-        if (!authorized) {
-          await signOut(auth);
-        }
-        if (active) setIsAdmin(authorized);
-      } catch {
-        try {
-          await signOut(auth);
-        } catch {
-          // The database rules still reject invalid or stale authorization.
-        }
-        if (active) setIsAdmin(false);
-      }
-    });
-
-    return () => {
-      active = false;
-      unsubscribe();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (isAdmin === null) return;
-    if (!isLoginRoute && !isAdmin) {
-      router.replace('/');
-    } else if (isLoginRoute && isAdmin) {
-      router.replace('/home');
-    }
-  }, [isAdmin, isLoginRoute, router]);
-
-  if (!isLoginRoute && isAdmin === null) {
-    return (
-      <View style={styles.loading}>
-        <ActivityIndicator size="large" color="#1D3D47" />
-      </View>
-    );
-  }
-
-  if (!isLoginRoute && !isAdmin) return null;
-
-  if (isLoginRoute) {
-    return <Stack screenOptions={{ headerShown: false }} />;
-  }
-
+// Authentication is enforced in app/_layout.tsx for every route.
+export default function TabsLayout() {
   return (
     <View style={{ flex: 1 }}>
       <Stack
@@ -80,12 +20,6 @@ export default function RootLayout() {
 }
 
 const styles = StyleSheet.create({
-  loading: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-  },
   header: {
     height: Platform.select({ ios: 100, android: 60 }),
     backgroundColor: '#1D3D47',
