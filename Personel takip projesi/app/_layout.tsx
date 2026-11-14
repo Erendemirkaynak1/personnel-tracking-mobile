@@ -6,10 +6,13 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { getIdTokenResult, onIdTokenChanged, signOut } from 'firebase/auth';
+import type { Auth } from 'firebase/auth';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { auth } from '../firebaseConfig';
+import { auth as firebaseAuth } from '../firebaseConfig';
+
+const auth: Auth = firebaseAuth;
 
 // Protect the entire route tree. Root-level pages such as /employees and
 // /time-records are siblings of the (tabs) group and must be guarded here.
