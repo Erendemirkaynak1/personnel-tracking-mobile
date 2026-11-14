@@ -38,6 +38,7 @@ jobs:
        github.event.pull_request.head.repo.full_name == github.repository) ||
       (github.event_name == 'push' && github.ref == 'refs/heads/security/hardening')
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: write
     defaults:
@@ -55,11 +56,12 @@ jobs:
           node-version: 22.13.x
           cache: npm
           cache-dependency-path: "Personel takip projesi/package-lock.json"
-      - name: Install the SDK58 CLI and regenerate the dependency graph
+      - name: Generate lockfile and install SDK58 dependency graph
         run: |
           rm -f package-lock.json
           npm install --ignore-scripts --no-audit --no-fund
-          npx expo install --fix
+      - name: Align Expo SDK58 native modules
+        run: npx expo install --fix
       - name: Apply compatible transitive dependency security fixes
         id: audit-fix
         run: npm audit fix --package-lock-only --ignore-scripts
