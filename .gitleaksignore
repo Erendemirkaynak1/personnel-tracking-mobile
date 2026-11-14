@@ -1,0 +1,4 @@
+# Exact fingerprints for the known Firebase browser API key already present in the initial upload.
+# These entries suppress only these two historical occurrences; new keys or other secrets still fail CI.
+758cc845a0318bf9ffed9f2f7346bd5dac292e5a:Personel takip projesi/firebaseConfig.js:gcp-api-key:13
+5f9052b1fb6eccd9ee6e4dbccf4aa87951b8b7c2:Personel takip projesi/firebaseConfig.js:gcp-api-key:6

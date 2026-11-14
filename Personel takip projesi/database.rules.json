@@ -1,0 +1,30 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "employees": {
+      ".read": "auth != null && auth.token.admin === true",
+      ".write": "auth != null && auth.token.admin === true"
+    },
+    "devices": {
+      ".read": "auth != null && auth.token.admin === true",
+      ".write": "auth != null && auth.token.admin === true"
+    },
+    "departments": {
+      ".read": "auth != null && auth.token.admin === true",
+      ".write": "auth != null && auth.token.admin === true"
+    },
+    "bonus": {
+      ".read": "auth != null && auth.token.admin === true",
+      ".write": "auth != null && auth.token.admin === true"
+    },
+    "timeRecords": {
+      ".read": "auth != null && auth.token.admin === true",
+      ".write": "auth != null && auth.token.admin === true"
+    },
+    "login": {
+      ".read": false,
+      ".write": false
+    }
+  }
+}

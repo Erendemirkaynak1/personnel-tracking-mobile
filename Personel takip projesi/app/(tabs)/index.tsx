@@ -1,24 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import { useRouter } from 'expo-router';
 import { loginUser } from '../../services/database';
-import { Ionicons } from '@expo/vector-icons';
-
-type AppRoute = '/employees' | '/bonus' | '/devices' | '/time-records';
-type IoniconsType = 'people' | 'cash' | 'phone-portrait' | 'time';
 
 export default function LoginScreen() {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
   const router = useRouter();
 
-  // Internet bağlantısı kontrolü
   useEffect(() => {
-    const unsubscribe = NetInfo.addEventListener(state => {
-      const connected = !!state.isConnected && !!state.isInternetReachable;
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      const connected = !!state.isConnected && state.isInternetReachable !== false;
       setIsConnected(connected);
       if (!connected) {
         Alert.alert('İnternet Bağlantısı Yok', 'Lütfen internet bağlantınızı kontrol edin.');
@@ -28,36 +31,32 @@ export default function LoginScreen() {
   }, []);
 
   const handleLogin = async () => {
-    if (isConnected === false) {
-      Alert.alert('İnternet Bağlantısı Yok', 'İnternet bağlantınızı kontrol ettikten sonra tekrar deneyin.');
+    if (isConnected !== true) {
+      Alert.alert('Bağlantı gerekli', 'Giriş yapmak için internet bağlantınızı kontrol edin.');
       return;
     }
-    if (!username || !password) {
-      Alert.alert('Hata', 'Lütfen kullanıcı adı ve şifre alanlarını doldurun.');
+
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail || !password) {
+      Alert.alert('Eksik bilgi', 'Lütfen e-posta ve şifre alanlarını doldurun.');
       return;
     }
 
     setLoading(true);
     try {
-      const result = await loginUser(username, password);
+      const result = await loginUser(normalizedEmail, password);
       if (result.success) {
-        Alert.alert('Giriş Başarılı', `Hoş geldiniz, ${username}!`);
-        router.push('/home');
+        Alert.alert('Giriş Başarılı', 'Yönetici oturumu açıldı.');
+        router.replace('/home');
       } else {
-        Alert.alert('Hata', result.error || 'Giriş başarısız');
+        Alert.alert('Giriş Başarısız', result.error);
       }
-    } catch (error) {
-      let errorMessage = 'Bir hata oluştu';
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-      Alert.alert('Hata', errorMessage);
     } finally {
+      setPassword('');
       setLoading(false);
     }
   };
 
-  // Bağlantı durumu belirsizken yükleme
   if (isConnected === null) {
     return (
       <View style={styles.container}>
@@ -71,10 +70,14 @@ export default function LoginScreen() {
       <Text style={styles.title}>Personel Takip Programına Hoş Geldiniz</Text>
       <TextInput
         style={styles.input}
-        placeholder="Kullanıcı Adı"
-        value={username}
-        onChangeText={setUsername}
-        editable={!!isConnected}
+        placeholder="Yönetici e-posta adresi"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
+        autoCorrect={false}
+        textContentType="emailAddress"
+        editable={isConnected && !loading}
       />
       <TextInput
         style={styles.input}
@@ -82,12 +85,15 @@ export default function LoginScreen() {
         value={password}
         onChangeText={setPassword}
         secureTextEntry
-        editable={!!isConnected}
+        autoCapitalize="none"
+        textContentType="password"
+        editable={isConnected && !loading}
       />
       <TouchableOpacity
-        style={[styles.button, !isConnected && styles.buttonDisabled]}
+        style={[styles.button, (!isConnected || loading) && styles.buttonDisabled]}
         onPress={handleLogin}
         disabled={loading || !isConnected}
+        accessibilityRole="button"
       >
         <Text style={styles.buttonText}>
           {loading ? 'Giriş Yapılıyor...' : 'Giriş Yap'}

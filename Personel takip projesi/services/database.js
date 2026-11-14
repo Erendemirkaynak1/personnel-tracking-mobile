@@ -1,10 +1,11 @@
-import { database } from '../firebaseConfig';
+import { auth, database } from '../firebaseConfig';
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { ref, get, set, update, remove, push, onValue } from 'firebase/database';
 
 // Cihaz (Device) İşlemleri
 export const getDevices = (callback) => {
   const devicesRef = ref(database, 'devices');
-  onValue(devicesRef, (snapshot) => {
+  return onValue(devicesRef, (snapshot) => {
     const data = snapshot.val();
     callback(data || []);
   });
@@ -84,45 +85,47 @@ export const saveTimeRecord = async ({ employeeId, entryTime, exitTime }) => {
   return timeRecordRef.key;
 };
 
-// Zaman Kayıtları - Fetch
 export const fetchTimeRecords = async () => {
   const snapshot = await get(ref(database, 'timeRecords'));
   return snapshot.val() || [];
 };
 
-// Aynı fonksiyonu farklı isimle de export et (alias)
 export const addTimeRecord = saveTimeRecord;
 
-// Kullanıcı Girişi
-export const loginUser = async (username, password) => {
+// Authentication is handled by Firebase Authentication, never by reading a
+// password from Realtime Database. Only users with a trusted admin custom claim
+// may enter this management application or access the protected database rules.
+export const loginUser = async (email, password) => {
   try {
-    const snapshot = await get(ref(database, 'login'));
-    const loginData = snapshot.val();
+    const credential = await signInWithEmailAndPassword(auth, email.trim(), password);
+    const token = await credential.user.getIdTokenResult(true);
 
-    if (!loginData) {
-      return { 
-        success: false, 
-        error: 'Sistemde kayıtlı kullanıcı bulunamadı' 
+    if (token.claims.admin !== true) {
+      await signOut(auth);
+      return {
+        success: false,
+        error: 'Bu hesap için yönetici yetkisi tanımlanmamış.',
       };
     }
 
-    if (loginData.username === username && loginData.pass === password) {
-      return { 
-        success: true, 
-        username: loginData.username,
-        userData: loginData 
-      };
-    }
-    
-    return { 
-      success: false, 
-      error: 'Geçersiz kullanıcı adı veya şifre' 
+    return {
+      success: true,
+      email: credential.user.email,
     };
   } catch (error) {
-    console.error("Login hatası:", error);
-    return { 
-      success: false, 
-      error: 'Sistem hatası. Lütfen daha sonra tekrar deneyin.' 
+    // A failed claim refresh must never leave a partially authenticated session.
+    try {
+      await signOut(auth);
+    } catch {
+      // Firebase database rules remain the server-side authorization boundary.
+    }
+
+    // Do not expose account-existence details or backend internals to the UI.
+    return {
+      success: false,
+      error: 'Giriş başarısız. E-posta ve şifrenizi kontrol edin veya yöneticinize başvurun.',
     };
   }
 };
+
+export const logoutUser = async () => signOut(auth);

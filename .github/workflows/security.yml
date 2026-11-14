@@ -1,0 +1,135 @@
+name: Security checks
+
+on:
+  push:
+    branches: [main, "security/**"]
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  secret-scan:
+    name: Scan current tree and Git history for secrets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install pinned Gitleaks CLI
+        run: |
+          curl --fail --silent --show-error --location https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_linux_x64.tar.gz | tar -xz -C /usr/local/bin gitleaks
+          gitleaks version
+      - name: Scan full Git history and working tree
+        run: gitleaks detect --source . --config .gitleaks.toml --redact --exit-code 1 --verbose
+
+  dependency-fix:
+    name: Apply compatible dependency security updates
+    if: >-
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.head.ref == 'security/hardening' &&
+       github.event.pull_request.head.repo.full_name == github.repository) ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/security/hardening')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: "Personel takip projesi"
+    steps:
+      - name: Checkout hardening branch without persisted credentials
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.x
+          cache: npm
+          cache-dependency-path: "Personel takip projesi/package-lock.json"
+      - name: Generate lockfile for SDK58 package manifest
+        run: |
+          rm -f package-lock.json
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Align Expo SDK58 native modules
+        run: npx --yes expo@~58.0.24 install --fix
+      - name: Apply compatible transitive dependency security fixes
+        id: audit-fix
+        run: npm audit fix --package-lock-only --ignore-scripts
+        continue-on-error: true
+      - name: Commit updated lockfile
+        if: always()
+        working-directory: .
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+        run: |
+          if [ ! -f "Personel takip projesi/package-lock.json" ]; then
+            echo "Lockfile generation failed; refusing to commit an incomplete dependency tree."
+            exit 1
+          fi
+          if git diff --quiet -- "Personel takip projesi/package.json" "Personel takip projesi/package-lock.json"; then
+            echo "No dependency updates were applied."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "Personel takip projesi/package.json" "Personel takip projesi/package-lock.json"
+          git commit -m "chore: upgrade Expo SDK58 and patch dependency security issues"
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git fetch origin "${BRANCH_NAME}"
+          git rebase "origin/${BRANCH_NAME}"
+          git push origin "HEAD:${BRANCH_NAME}"
+
+  app-and-database-security:
+    name: App checks and Firebase rules tests
+    needs: dependency-fix
+    if: ${{ always() && (needs.dependency-fix.result == 'success' || needs.dependency-fix.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: "Personel takip projesi"
+    steps:
+      - name: Checkout latest branch state
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.x
+          cache: npm
+          cache-dependency-path: "Personel takip projesi/package-lock.json"
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Audit production and development dependencies
+        id: dependency-audit
+        run: npm audit --audit-level=high
+        continue-on-error: true
+      - name: TypeScript validation
+        run: npx tsc --noEmit
+      - name: Expo lint
+        run: npx expo lint
+      - name: Install isolated emulator test tools
+        run: npm install --no-save --package-lock=false firebase-tools @firebase/rules-unit-testing
+      - name: Test Realtime Database rules in emulator
+        run: npx firebase-tools emulators:exec --only database --project demo-personnel-security "node security-tests/database.rules.test.cjs"
+      - name: Expo SDK compatibility diagnostics
+        run: npx expo-doctor
+      - name: Fail if high or critical dependency advisories remain
+        if: steps.dependency-audit.outcome == 'failure'
+        run: |
+          echo "High or critical dependency advisories remain. See npm audit output above."
+          exit 1

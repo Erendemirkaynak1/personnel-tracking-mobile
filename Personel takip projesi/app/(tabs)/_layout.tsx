@@ -1,13 +1,9 @@
+import React from 'react';
 import { Stack } from 'expo-router';
-//import { MenuButton } from '@/components/MenuButton';
-import { View, StyleSheet, Platform } from 'react-native';
-import { usePathname } from 'expo-router';
-export default function RootLayout() {
-  const pathname = usePathname();
-  //index de layoutu gizler
-  if (pathname === '/' || pathname === '/index') { // Android bazen '/index' kullanıyor
-    return <Stack screenOptions={{ headerShown: false }} />
-  }
+import { Platform, StyleSheet, View } from 'react-native';
+
+// Authentication is enforced in app/_layout.tsx for every route.
+export default function TabsLayout() {
   return (
     <View style={{ flex: 1 }}>
       <Stack
@@ -16,35 +12,27 @@ export default function RootLayout() {
           headerTitleAlign: 'center',
           headerStyle: styles.header,
           headerTitleStyle: styles.headerTitle,
-         // headerShown: !isLoginPage,
         }}
       />
-      <View style={styles.menuContainer}>
-       
-      </View>
+      <View style={styles.menuContainer} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    position: 'relative',
-  },
   header: {
-    height: Platform.select({ ios: 100, android: 60 }), // Platforma göre yükseklik
-    backgroundColor: '#1D3D47', // Header arkaplan rengi
+    height: Platform.select({ ios: 100, android: 60 }),
+    backgroundColor: '#1D3D47',
   },
   headerTitle: {
-    color: 'white', // Başlık rengi
+    color: 'white',
     fontWeight: 'bold',
   },
   menuContainer: {
     position: 'absolute',
-    top: Platform.select({ ios: 60, android: 15 }), // Platforma göre konum
+    top: Platform.select({ ios: 60, android: 15 }),
     right: 20,
     zIndex: 1000,
-    //backgroundColor: 'rgba(255,255,255,0.3)', // Buton arkaplanı
     borderRadius: 20,
     padding: 8,
   },

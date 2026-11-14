@@ -1,7 +1,14 @@
-// Import only what you need
-import { initializeApp } from "firebase/app";
-import { getDatabase } from "firebase/database";
+import { getApp, getApps, initializeApp } from 'firebase/app';
+import { getDatabase } from 'firebase/database';
+import {
+  getAuth,
+  getReactNativePersistence,
+  initializeAuth,
+} from 'firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// Firebase web configuration is a public client identifier, not an admin secret.
+// Restrict this key to this app and the Firebase APIs it actually uses in Google Cloud.
 const firebaseConfig = {
   apiKey: "AIzaSyAoh9S5m-h_VMVRV5f9IizSFtnMQ_WFBOQ",
   authDomain: "personeltakip-60760.firebaseapp.com",
@@ -10,22 +17,23 @@ const firebaseConfig = {
   storageBucket: "personeltakip-60760.firebasestorage.app",
   messagingSenderId: "148591490016",
   appId: "1:148591490016:web:4792571ed395e81e89f185",
-  measurementId: "G-694H8T91NJ"
+  measurementId: "G-694H8T91NJ",
 };
 
-const app = initializeApp(firebaseConfig);
-export const database = getDatabase(app);
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
-// Geliştirilmiş fetchEmployees fonksiyonu
-export const fetchEmployees = async () => {
-  try {
-    const snapshot = await get(ref(database, 'employees'));
-    if (!snapshot.exists()) {
-      throw new Error('Veritabanında employees düğümü bulunamadı');
-    }
-    return snapshot.val();
-  } catch (error) {
-    console.error('Veri çekme hatası:', error);
+let auth;
+try {
+  auth = initializeAuth(app, {
+    persistence: getReactNativePersistence(AsyncStorage),
+  });
+} catch (error) {
+  // Fast Refresh can evaluate this module again after Auth was initialized.
+  if (error?.code !== 'auth/already-initialized') {
     throw error;
   }
-};
+  auth = getAuth(app);
+}
+
+export { auth };
+export const database = getDatabase(app);
