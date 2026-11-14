@@ -55,10 +55,10 @@ jobs:
           node-version: 22.13.x
           cache: npm
           cache-dependency-path: "Personel takip projesi/package-lock.json"
-      - name: Install current locked dependencies
-        run: npm ci
-      - name: Upgrade Expo SDK 52 to supported SDK 57
-        run: npx expo install expo@^57.0.0 --fix
+      - name: Regenerate lockfile for the Expo SDK 57 dependency graph
+        run: |
+          rm -f package-lock.json
+          npm install
       - name: Apply compatible transitive dependency security fixes
         id: audit-fix
         run: npm audit fix
@@ -70,14 +70,18 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
         run: |
-          if git diff --quiet -- "Personel takip projesi/package-lock.json"; then
-            echo "No compatible dependency updates were applied."
+          if [ ! -f "Personel takip projesi/package-lock.json" ]; then
+            echo "Lockfile generation failed; refusing to commit an incomplete dependency tree."
+            exit 1
+          fi
+          if git diff --quiet -- "Personel takip projesi/package.json" "Personel takip projesi/package-lock.json"; then
+            echo "No dependency updates were applied."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add "Personel takip projesi/package.json" "Personel takip projesi/package-lock.json"
-          git commit -m "chore: upgrade Expo SDK and apply dependency security fixes"
+          git commit -m "chore: regenerate SDK57 lockfile and apply dependency security fixes"
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git fetch origin "${BRANCH_NAME}"
           git rebase "origin/${BRANCH_NAME}"
